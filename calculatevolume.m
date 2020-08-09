@@ -90,7 +90,7 @@ end
     cutoff = zeros(length(zpos)-1,1);
     for i=1:length(zpos)-1
         i
-        cutoff(i) = (find(d2ne>=fittedline(i),1)-1)*d2nebin*1e3;
+        cutoff(i) = round((find(d2ne>=fittedline(i),1)-1)*d2nebin*1e3);
         dist(1:(find(d2ne>=fittedline(i),1)-1),i) = 0; 
         index= [index;find(data.d2ne<fittedline(i) & data.zpos >zpos(i) & data.zpos < zpos(i+1))];
         xvar = -7250+cutoff(i):binsize:7250-cutoff(i);
