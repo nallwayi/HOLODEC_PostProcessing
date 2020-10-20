@@ -82,7 +82,12 @@ function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(sortedda
    
    % 2d poisson statistics
    nopix = 0.8*(length(x)-1)*(length(y)-1);
-   lambda = length(sorteddata.xpos)/nopix/100;
+   factor=1;
+   lambda = length(sorteddata.xpos)/nopix;
+   if lambda>100
+       factor=100;
+   lambda = length(sorteddata.xpos)/nopix/factor;
+   end
    count=1:round(3*lambda);
    if lambda < 100
      P = lambda.^count.*exp(-lambda)./factorial(count);

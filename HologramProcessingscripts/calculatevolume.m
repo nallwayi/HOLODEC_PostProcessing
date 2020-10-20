@@ -15,8 +15,8 @@ function [area2dvar,volume]=calculatevolume(data,label)
 
 % zpos = (0:0.1:15)*1e-2;
 
-zini   = 25*1e3;
-zfin   = 145*1e3;    
+zini   = 20*1e3;
+zfin   = 150*1e3;    
 binsize = 100;
 zpos = zini:binsize*10:zfin;
 d2nebin = 0.1;
@@ -39,7 +39,7 @@ end
         for k=1:size(zpos,2)-1   
             dist(j,k)= numel(intersect(count{2,j},count{1,k}));         
         end      
-        divfac = (4850*2+7250*2-4*d2ne(j))/(4850*2+7250*2-4*d2ne(end));%Perimeter division
+        divfac = (4850*4+7250*4-4*d2ne(j));%/(4850*4+7250*4-4*d2ne(end));%Perimeter division
         dist(j,:) = dist(j,:)/divfac;
    end
    normftr = max(max(dist(40:48,1:10))); % normalizind factor;
@@ -68,12 +68,12 @@ end
 %    Determination the 75 percent cutoff
     y = zeros(1,length(zpos)-1);
     for i=1:length(zpos)-1
-%         temp=d2ne(find(dist(:,i)>0.6, 1 ) -1);
-%         if ~isempty(temp)
-             y(i) = d2ne(find(dist(:,i)>0.75, 1 ) -1);
-%         else
-%             y(i)=nan;
-%         end
+        temp=d2ne(find(dist(:,i)>0.75, 1 ) -1);
+        if ~isempty(temp)
+             y(i) = temp;
+        else
+            y(i)=[];
+        end
 %        find(dist(:,i)>0.75, 1 )-1;
 %        dist(1:(find(dist(:,i)<0.75) -1),i) = 0;
 %        index = find(data.d2ne<y(i) & data.zpos >zpos(i) & data.zpos < zpos(i+1));
