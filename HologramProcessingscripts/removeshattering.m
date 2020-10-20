@@ -12,7 +12,7 @@ end
 
 
 if isequal(method,'chopoff')
-    index = particledata.zpos < 0.025 | particledata.zpos > 0.145;
+    index = particledata.zpos < 0.020 | particledata.zpos > 0.150;
     fnames = fieldnames(particledata);
     
     for i=1:length(fnames)
