@@ -42,7 +42,7 @@ end
         divfac = (4850*4+7250*4-4*d2ne(j));%/(4850*4+7250*4-4*d2ne(end));%Perimeter division
         dist(j,:) = dist(j,:)/divfac;
    end
-   normftr = max(max(dist(40:48,1:10))); % normalizind factor;
+   normftr = max(max(dist(30:end,1:10))); % normalizind factor;
    dist = dist./normftr;
 %    assignin('base','dist',dist)
    
@@ -68,11 +68,11 @@ end
 %    Determination the 75 percent cutoff
     y = zeros(1,length(zpos)-1);
     for i=1:length(zpos)-1
-        temp=d2ne(find(dist(:,i)>0.75, 1 ) -1);
-        if ~isempty(temp)
-             y(i) = temp;
+        temp =find(dist(:,i)>0.75, 1 );
+        if ~isempty(temp) & temp >1
+             y(i) = d2ne(temp-1);;
         else
-            y(i)=[];
+            y(i)=NaN;
         end
 %        find(dist(:,i)>0.75, 1 )-1;
 %        dist(1:(find(dist(:,i)<0.75) -1),i) = 0;
@@ -80,7 +80,9 @@ end
     end
     
 %     Fitting the points to generate the line of cut off
-    line = polyfit((0.5*(zpos(1:end-1)+zpos(2:end))),y,1);
+    indy = find(~isnan(y));
+%     line = polyfit((0.5*(zpos(1:end-1)+zpos(2:end))),y,1);
+    line = polyfit(zpos(indy),y(indy),1);
     m = line(1);
     c = line(2);
     fittedline = m.*(0.5*(zpos(1:end-1)+zpos(2:end)))+c;

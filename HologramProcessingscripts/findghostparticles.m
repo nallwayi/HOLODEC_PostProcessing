@@ -88,7 +88,7 @@ function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(sortedda
        factor=100;
    lambda = length(sorteddata.xpos)/nopix/factor;
    end
-   count=1:round(3*lambda);
+   count=1:round(2*lambda);
    if lambda < 100
      P = lambda.^count.*exp(-lambda)./factorial(count);
    else
@@ -96,9 +96,11 @@ function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(sortedda
       sigma = sqrt(lambda);
       P=1/(sigma*sqrt(2*pi))* exp(-0.5.*((k-mu)/sigma).^2);
    end
+   
+ 
       
-   thresh2d = find(P*nopix > 0.5, 1, 'last' )*100 
-   lowerthreshold=100;
+   thresh2d = find(P*nopix > 0.5, 1, 'last' )*factor 
+   lowerthreshold=00;
    dist2d = size(size(y,2)-1,size(x,2)-1);
    dist2dfin = size(size(y,2)-1,size(x,2)-1);
    
@@ -151,11 +153,11 @@ function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(sortedda
        end
      end
      
-%     plotting the statistics data
+
     figure
-   hist(reshape(dist2d,1,[]),length(count))
+   hist(reshape(dist2dfin,1,[]),length(count))
     hold on
-    plot(count*100,P*nopix,'r')
+    plot(count*factor,P*nopix,'r')
     title('2D poisson distribution & Histogram of data')
     xlabel('Number of particles per pixel')
     ylabel('Count')
