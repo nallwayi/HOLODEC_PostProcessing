@@ -1,49 +1,19 @@
 % Program to do classification of the reconstructed holographic data
 
-% Saving each sequence file
-% this is for a single file. automate it to take all seq together
+% Path to holograms
+cd([pwd,'\recon'])
+rules= {'pixden','ge',0.79;'dsqoverlz','le',2;'underthresh','ge',0.04;'asprat','le',1.5};
+pStats = getparticlemetrics(rules)    
+save(pStats,'pStats','-v7.3')
 
-RF=18;
-global hologramnumber
-hologramnumber = 1;
-
-for k=8:12
-    
-for i=00:59
-    disp(sprintf('Seq%02d%02d',[k i]));
-    location = sprintf('/data/hulk/Nithin/IOP1/RF%02d/seqdata/seqdata%02d/seq%02d/',[ RF k i]);
-    cd(location);
-%     addpath /data/hulk/Nithin/RF18/Script
-%     filename = sprintf('/data/hulk/Nithin/RF%02d/particledata/seq/seq%02d%02d.mat',[RF k i]);
-    filename = sprintf('/data/hulk/Nithin/IOP1/RF%02d/Aftervolumecorrection/Withhologramnumber/data/seq%02d%02d.mat',[RF k i]);
-
-    [nullflag,inputdata] = getparticlemetrics();
-    
-    % [gp,data]     = ghostparticleanalyser(data);
-    if nullflag==0
-        data          = sortusingclassificationtree(inputdata,5000,particletree,noisetree);
-        save(filename, 'data')   
-%         combinedfname = sprintf('/data/hulk/Nithin/RF%02d/particledata/sorteddata',RF);
-        combinedfname = sprintf('/data/hulk/Nithin/IOP1/RF%02d/Aftervolumecorrection/Withhologramnumber/data/sorteddata.mat',RF);
-    
-        if ~exist('sorteddata','var')
-            sorteddata  = data;
-        else
-            fnames = fieldnames(data);
-            for j=1:length(fnames)
-                sorteddata.(fnames{j}) = cat(1,sorteddata.(fnames{j}),data.(fnames{j}));
-            end
-        end
-    end
-    
-end
-end
-save(combinedfname,'sorteddata','-v7.3')
 % Combibing data to get a single data file
-cd('/homes/CLOUD/nallwayi/Documents/ACEENA/RF02/data/seqdata')
+cd ..
+mkdir([pwd,'\data'])
+cd([pwd,'\data'])
+
 
 % Removing ghost particles and 
-[particledata,gpindex,numgp,dist2d,label] = findghostparticles(sorteddata);
+[particledata,gpindex,numgp,dist2d,label] = findghostparticles(pStats.metrics);
 particledata = removeshattering(particledata,'chopoff');
 save('particledata','particledata','-v7.3')
 [area2dvar,volume]=calculatevolume(particledata,label);

@@ -1,156 +1,179 @@
-
-% Function to generate the particle metrics from the hist files or 
-% the output of the carft. Rules for automatic classification is applied here
+% Function to generate the particle metrics from the hist files  
+% Rules for automatic classification and decision tree is applied here
 % These rules can be edited
-% SYNTAX:  For Carft output
-%          getparticlemetrics(GUIhandles,'basic') : get basic metrics
-%          getparticlemetrics(GUIhandles)         : get all metrics
-%          For hist files
-%          getparticlemetrics('basic')            : get basic metrics
-%          getparticlemetrics()                   : get all metrics
+% SYNTAX:  
+%          getparticlemetrics(rules)   
+%  eg:
+%       getparticlemetrics({'pixden','ge',0.79;'dsqoverlz','le',2;...
+%           'underthresh','ge',0.04;'asprat','le',1.5})
 
-function [nullflag,inputdata]=getparticlemetrics(inputdata,parameters)
+function pStats = getparticlemetrics(rules)
+    tic
 
-%  Input argument validataions
-if nargin <1
-    inputdata=[];parameters=[];%index=[];
-elseif nargin <2
-    if ischar(inputdata)
-        parameters = inputdata;
-        inputdata=[];%index=[];
-    else
-        parameters=[];
-    end    
-% elseif nargin <3
-%     if ~ischar(parameters)
-%         index = parameters;parameters=[];
-%     else
-%         index=[];
-%     end
-end
+%     Loading the appropriate trees
+%     load 'particletree.mat' particletree
+    load 'particletree.mat' particletree
+    load 'noisetree.mat' noisetree
+    
+    pathtohistmat=pwd;
+    histdetails = dir(fullfile(pathtohistmat,'*hist.mat'));
 
 
-% Defining all metric names
-if strcmp(parameters,'basic')
-    metricnames = {'zpos','xpos','ypos','majsiz','minsiz','pixden','underthresh',...
-        'd2ne','nd2ne','d2nc','nd2nc','d2c','nd2c','eqsiz','dsqoverlz','d2nep','holonum',...
-        'holotimes','timestamp'};
-else
-    metricnames={'numzs','zLIndampg','zLIndcompg','zLInd','prtclthresh',...
-'prtclglblbkgndlvl','prtclnoiseamp','zpos','area','xpos','ypos','majsiz',...
-'minsiz','orient','alvl','balvl','perimcx','perimcy','perimmean','perimstd',...
-'perimnum','minamp','maxamp','rngamp','meanamp','stdamp','minph','maxph',...
-'rngph','meanph','stdph','mincompg','maxcompg','rngcompg','meancompg',...
-'stdcompg','minampg','maxampg','rngampg','meanampg','stdampg','minphg',...
-'maxphg','rngphg','meanphg','stdphg','pixden','prminamp','prmaxamp','prrngamp',...
-'prmeanamp','prstdamp','prminph','prmaxph','prrngph','prmeanph','prstdph',...
-'prmincompg','prmaxcompg','prrngcompg','prmeancompg','prstdcompg',...
-'prminampg','prmaxampg','prrngampg','prmeanampg','prstdampg','prminphg',...
-'prmaxphg','prrngphg','prmeanphg','prstdphg','underthresh','asprat',...
-'pampdepth','ptcharea','ptchthrarea','ptchngrps','ptchxsiz','ptchysiz',...
-'phfl','d2ne','nd2ne','d2nc','nd2nc','d2c','nd2c','eqsiz','dsqoverlz','d2nep',...
-'tphstdamp','tphstdampg','tphstdcompg','tphstdph','tphstdphg','tphmaxamp',...
-'tphmaxampg','tphmaxcompg','tphmaxph','tphmaxphg','tphmeanamp','tphmeanampg',...
-'tphmeancompg','tphmeanph','tphmeanphg','tphunderthresh','tphpampdepth','holonum',...
-'holotimes','timestamp','noholograms'};
-end
 
-% Reading data from the hist files or carft output
-if isempty(inputdata)
-   [nullflag,inputdata] = readhistfiles(metricnames);
-else
-   [nullflag,inputdata] = readfromGUIhandles(inputdata,metricnames);
-end
-
-
-%  This function reads all the patricle metrics details from the current
-%  folder into a single input file
-    function [nullflag,inputdata] = readhistfiles(metricnames)
-        global hologramnumber
-        nullflag=0;                          
-        for i=1:length(metricnames)
-            inputdata.(metricnames{i})=[];
-        end
-%         pathtohistmat='/homes/CLOUD/nallwayi/Documents/ACEENA/RF02/RF02_05/recon/seq06';
-        pathtohistmat=pwd;
-        histdetails = dir(fullfile(pathtohistmat,'*hist.mat'));
-        if isempty(histdetails)            
-            nullflag=1;
-            return
-        end
-        
-%         Extracting time details for ACE-ENA data
-        holotimes  = length(histdetails);
-        holonum   = length(histdetails);
-        timestamp = length(histdetails);
-        noholograms = length(histdetails);
+%   Extracting time details for ACE-ENA pmetrics
+    holotimes  = length(histdetails);
+    holonum    = length(histdetails);
+    timestamp  = length(histdetails);
+    holosecond = length(histdetails);
        
-        for i = 1:length(histdetails)
-            tmp = histdetails(i).name;
-            tmp = tmp(13:end);
-            yr = str2double(tmp(1:4));
-            mt = str2double(tmp(6:7));
-            dy = str2double(tmp(9:10));
-            hr = str2double(tmp(12:13));
-            mn = str2double(tmp(15:16));
-            sc = str2double(tmp(18:19)) + 1e-6*str2double(tmp(21:26));
-            holotimes(i) = hr*3600+mn*60+sc;
-            timestamp(i) = datenum(yr,mt,dy,hr,mn,sc);
-        end
+    for cnt = 1:length(histdetails)
+        tmp = histdetails(cnt).name;
+        tmp = tmp(end-34:end-9);
+        yr = str2double(tmp(1:4));
+        mt = str2double(tmp(6:7));
+        dy = str2double(tmp(9:10));
+        hr = str2double(tmp(12:13));
+        mn = str2double(tmp(15:16));
+        sc = str2double(tmp(18:19)) + 1e-6*str2double(tmp(21:26));
+        sd = str2double(tmp(18:19));
         
-        for i=1:length(histdetails)
-%             noholograms(i) = sum(unique(holotimes)<ceil(holotimes(i))...
-%                 & unique(holotimes)>floor(holotimes(i)));
-            noholograms(i) = sum(second(timestamp)<=ceil(second(timestamp(i)))...
-                & second(timestamp)>floor(second(timestamp(i))));
-            holonum(i) = hologramnumber;
-            hologramnumber = hologramnumber +1;
-        end
-        
-        for i=1:length(histdetails)
-            particledata=load(fullfile(pathtohistmat,histdetails(i).name));
+        holotimes(cnt)  = hr*3600+mn*60+sc;
+        holosecond(cnt) = hr*3600+mn*60+sd;
+        timestamp(cnt)  = datenum(yr,mt,dy,hr,mn,sc);
+        holonum(cnt)    = cnt;
+    end
+    
+    
+%     Determining the number of holograms in each second 
+    noholograms(:,1)  = unique(holosecond);  
+    for cnt = 1:length(noholograms(:,1))
+        ind = find(noholograms(cnt,1) == holosecond);
+        noholograms(cnt,2) = length(ind);
+    end
+    
+    
+%     Saving the data 
+    pStats.header      = histdetails(1).name(1:end-36);
+    pStats.noholograms = noholograms;
+    
+    
+%     particledata=load(fullfile(pathtohistmat,histdetails(1).name));
+%     pStats.metricnames = particledata.pd.metricnames;   
+%     
+%     if ~any(strcmp(pStats.metricnames,'pixden'))
+%         pStats.metricnames{end+1} = 'pixden';
+%     end
+%     if ~any(strcmp(pStats.metricnames,'holotimes'))
+%         pStats.metricnames{end+1} = 'holotimes';
+%     end
+%     if ~any(strcmp(pStats.metricnames,'timestamp'))
+%         pStats.metricnames{end+1} = 'timestamp';
+%     end
+%     if ~any(strcmp(pStats.metricnames,'holonum'))
+%         pStats.metricnames{end+1} = 'holonum';
+%     end
+%    
+% %    Determining index of predefined rules 
+%     
+%      if exist('rules','var')
+%         ruleVar = [];
+%         for cnt = 1:size(size(rules,1))
+%             tmp = find((strcmp(rules{cnt,1},pStats.metricnames)) == 1);
+%             ruleVar = [ruleVar;tmp]; 
+%         end
+%      end
+%             
+%     
+% %        Saving the metrics
+%     pStats.metricmat = [];
+%     for cnt=length(histdetails)-20:length(histdetails)
+%         particledata=load(fullfile(pathtohistmat,histdetails(cnt).name));
+%         pixden    = 4*particledata.pd.getmetric('area')./...
+%             (pi*particledata.pd.getmetric('minsiz').*...
+%             particledata.pd.getmetric('majsiz'));
+%         metricmat = [particledata.pd.metricmat];
+%         metricmat(:,end+1) = pixden;
+%         metricmat(:,end+1) = ones(length(pixden),1)*holotimes(cnt);
+%         metricmat(:,end+1) = ones(length(pixden),1)*timestamp(cnt);
+%         metricmat(:,end+1) = ones(length(pixden),1)*holonum(cnt);
+%         
+% %         Applying the dynamic rules
+% 
+%         pStats.metricmat = [pStats.metricmat;metricmat];
+%     end
+%     
+    
+         particledata=load(fullfile(pathtohistmat,histdetails(1).name));
+         metricnames = [particledata.pd.metricnames;'pixden';'holotimes';...
+             'timestamp';'holosecond';'holonum'];
+         for i=1:length(metricnames)
+            pStats.metrics.(metricnames{i})=[];
+         end
+         
+         
+         for cnt=length(histdetails)-10:length(histdetails)
+            particledata=load(fullfile(pathtohistmat,histdetails(cnt).name));
             metrics = particledata.pd.getmetrics;
             
 %           Adding pixden rule if it dosent exist
             if ~isfield(metrics,'pixden')
                 metrics.pixden = 4*metrics.area./(pi*metrics.minsiz.*metrics.majsiz);
             end
+            
 %           Rules to remove artifacts from hist files
-            ind = metrics.pixden >= 0.79 & metrics.dsqoverlz <=2 &...
-                metrics.underthresh >= 0.04 & metrics.asprat<=1.5 ;
-%             ind = find(metrics.dsqoverlz <=2 & metrics.underthresh >= 0.1);
+            ind = 1:length(metrics.pixden);
+            for cnt2 = 1:size(rules,1)
+                fncn=str2func(rules{cnt2,2});
+                tmp = fncn(metrics.(rules{cnt2,1}),rules{cnt2,3}); 
+                ind = intersect(ind,find(tmp ==1));
+            end
+%             ind = find(metrics.pixden >= 0.79 & metrics.dsqoverlz <=2 &...
+%                 metrics.underthresh >= 0.04 & metrics.asprat<=1.5) ;
             
 %           Adding holonum, holotimes and timestamp
 
-            metrics.holotimes = ones((length(metrics.pixden)),1)*holotimes(i);
-            metrics.holonum   = ones((length(metrics.pixden)),1)*holonum(i);
-            metrics.timestamp = ones((length(metrics.pixden)),1)*timestamp(i);
-            metrics.noholograms = ones((length(metrics.pixden)),1)*noholograms(i);           
+            metrics.holotimes = ones((length(metrics.pixden)),1)*holotimes(cnt);
+            metrics.timestamp = ones((length(metrics.pixden)),1)*timestamp(cnt);
+            metrics.holonum   = ones((length(metrics.pixden)),1)*holonum(cnt);
+            metrics.holosecond   = ones((length(metrics.pixden)),1)*holosecond(cnt);
 
+           
+            
             if ~isempty(ind)
-                fnames = intersect(fieldnames(metrics),metricnames);
-                for j=1:length(fnames)
-                    inputdata.(fnames{j}) = cat(1,inputdata.(fnames{j}),metrics.(fnames{j})(ind));
+                fnames = fieldnames(metrics);
+                for cnt2=1:length(fnames)
+                    metrics.(fnames{cnt2}) = metrics.(fnames{cnt2})(ind);
+                end
+                % Sorting the data in a hologram using classification trees
+                threshold = 10;
+                if length(ind)<=threshold
+                    tree = noisetree;
+                else
+                    tree = particletree;
+                end
+                metrics = sortusingclassificationtree(metrics,tree);
+                
+                
+%               Saving the predicted particles from each hologram
+                for cnt2=1:length(fnames)
+                    pStats.metrics.(fnames{cnt2}) ...
+                        = cat(1,pStats.metrics.(fnames{cnt2})...
+                        ,metrics.(fnames{cnt2}));
                 end
             end
-        end
+            
+         end  
+      
+    toc 
+end
+
+function metrics = sortusingclassificationtree(metrics,tree)
+    table = struct2table(metrics);
+    ind = predict(tree,table)== 'Particle_round';
+
+    fnames = fieldnames(metrics);
+    for i=1:length(fnames)
+        metrics.(fnames{i}) = metrics.(fnames{i})(ind);
     end
 
-% This function is to get the details of the metics from the carft output
-    function [nullflag,inputdata] = readfromGUIhandles(GUIhandles,metricnames)
-        nullflag=0;
-        metrics = fieldnames(GUIhandles.ps);
-        metrics = intersect(metricnames,metrics);
-        metrics = cat(1,metrics,{'isparticlebyhand';'isparticlebypredict'});
-    
-        ind1 = find(GUIhandles.ps.pixden >= 0.85 & GUIhandles.ps.dsqoverlz <=2 ...
-            & GUIhandles.ps.underthresh >= 0.1 & GUIhandles.ps.isparticlebyhand == "Particle_round" );
-        ind2 = find(GUIhandles.ps.pixden >= 0.85 & GUIhandles.ps.dsqoverlz <=2 ...
-            & GUIhandles.ps.underthresh >= 0.1 & GUIhandles.ps.isparticlebypredict == "Particle_round" );
-        ind = union(ind1,ind2);
-        
-        for i=1:length(metrics)
-            inputdata.(metrics{i}) = GUIhandles.ps.(metrics{i})(ind);
-        end       
-    end
 end

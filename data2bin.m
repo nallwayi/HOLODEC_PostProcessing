@@ -1,6 +1,6 @@
 % dividing into radius bins
 
-function output = data2bin(pd,volume)
+function output = data2bin(pd,volume,pStats.noholograms)
 
 bin = [0  10 12.5 15 17.5 20 22.5 25 30 35 40 45 50 60 70 80 90 100 150 200 250 300 350 400 450 500 2000];
 % bin = [0  10 12.5 15 17.5 20 22.5 25 30 35 40 45 50 60];
@@ -26,8 +26,8 @@ for i=1:size(bin,2)-1
     end
     for t=1:length(holotimes)
         
-%         no_holograms = max(pd.holonum(round(pd.holotimes)==holotimes(t)));
-        no_holograms = round(min(pd.noholograms(round(pd.holotimes)==holotimes(t))));
+        ind = pStats.noholograms(:,1)==holotimes(t);
+        no_holograms = pStats.noholograms(ind,2);
         if ~isempty(no_holograms)
 
             concentration(t) = sum(floor(pd.holotimes(index))==holotimes(t))/no_holograms/volume/(bin(i+1)-bin(i));
@@ -47,8 +47,8 @@ output.Second=holotimes;
 
     for t=1:length(holotimes)
         
-%         no_holograms = max(pd.holonum(round(pd.holotimes)==holotimes(t)));
-        no_holograms = round(mean((pd.noholograms(round(pd.holotimes)==holotimes(t)))));
+        ind = pStats.noholograms(:,1)==holotimes(t);
+        no_holograms = pStats.noholograms(ind,2);
 
         if ~isempty(no_holograms)
             concentration(t) = sum(floor(pd.holotimes)==holotimes(t))/no_holograms/volume;    
