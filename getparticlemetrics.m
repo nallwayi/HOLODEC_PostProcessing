@@ -56,6 +56,12 @@ function pStats = getparticlemetrics(rules)
     pStats.header      = histdetails(1).name(1:end-36);
     pStats.noholograms = noholograms;
     
+    %     Saving info about all processed holograms
+    holoinfo   = nan(length(histdetails),2);
+    holoinfo(:,1) = holotimes;
+    holoinfo(:,2) = holosecond;
+    pStats.holoinfo = holoinfo;
+    
     
 %     particledata=load(fullfile(pathtohistmat,histdetails(1).name));
 %     pStats.metricnames = particledata.pd.metricnames;   
@@ -111,7 +117,7 @@ function pStats = getparticlemetrics(rules)
          end
          
          
-         for cnt=length(histdetails)-10:length(histdetails)
+         for cnt=1:length(histdetails)
             particledata=load(fullfile(pathtohistmat,histdetails(cnt).name));
             metrics = particledata.pd.getmetrics;
             

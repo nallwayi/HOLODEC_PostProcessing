@@ -1,7 +1,7 @@
 % Program to do classification of the reconstructed holographic data
 
 % Path to holograms
-cd([pwd,'\recon'])
+% cd([pwd,'\recon'])
 rules= {'pixden','ge',0.79;'dsqoverlz','le',2;'underthresh','ge',0.04;'asprat','le',1.5};
 pStats = getparticlemetrics(rules)    
 save(pStats,'pStats','-v7.3')
@@ -18,6 +18,8 @@ particledata = removeshattering(particledata,'chopoff');
 save('particledata','particledata','-v7.3')
 [area2dvar,volume]=calculatevolume(particledata,label);
 save('volume','volume','-v7.3')
-pd=calculatediameter(particledata);
-output = data2bin(pd,volume);
+% pd=calculatediameter(particledata);
+% 
+% pStats.diameter= pd;
+output = data2bin(pStats,volume);
 save('output','output','-v7.3')

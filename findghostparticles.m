@@ -2,16 +2,14 @@
 % Function to determine and eliminate ghost particles both from 3d and 2d
 % distribtuions. The function also returns the 2d particle distribution
 
-% Check with Dr. Shaw about the determination of threshold for removing
-% particles in a 3d voxel and 2d pixel
 
-function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(sorteddata)
+function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(input)
 
     % Conversion to micro meters for ease of calculation
 
-    sorteddata.xpos = sorteddata.xpos.*1e6;
-    sorteddata.ypos = sorteddata.ypos.*1e6;
-    sorteddata.zpos = sorteddata.zpos.*1e6;
+    input.xpos = input.xpos.*1e6;
+    input.ypos = input.ypos.*1e6;
+    input.zpos = input.zpos.*1e6;
 
     binsize = 100;
 
@@ -25,45 +23,43 @@ function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(sortedda
     
     % 3d poisson statistics
     novox = 0.8*(length(x)-1)*(length(y)-1)*(length(z)-1);
-    lambda = length(sorteddata.xpos)/novox;
-    k=1:round(4*lambda);
-    P = lambda.^k.*exp(-lambda)./factorial(k);
+    lambda = length(input.xpos)/novox;
+    cnt3=1:round(4*lambda);
+    P = lambda.^cnt3.*exp(-lambda)./factorial(cnt3);
     thresh3d = find(P*novox > 0.5, 1, 'last' )  
     
-    for i=1:size(x,2)-1        
-        temp = find(sorteddata.xpos > x(i) & sorteddata.xpos <= x(i+1)); 
+    for cnt=1:length(x)-1        
+        temp = find(input.xpos > x(cnt) & input.xpos <= x(cnt+1)); 
         if temp >thresh3d
-            index{1,i} = temp;
+            index{1,cnt} = temp;
         end
-            holes{1,i}=temp;
-        
-
+            holes{1,cnt}=temp;     
     end
         
-    for i=1:size(y,2)-1
-        temp = find(sorteddata.ypos > y(i) & sorteddata.ypos <= y(i+1)); 
+    for cnt=1:length(y)-1
+        temp = find(input.ypos > y(cnt) & input.ypos <= y(cnt+1)); 
         if temp > thresh3d
-            index{2,i} = temp;
+            index{2,cnt} = temp;
         end
-            holes{2,i}=temp;
+            holes{2,cnt}=temp;
         
     end        
    
-    for i=1:size(z,2)-1
-       temp = find(sorteddata.zpos > z(i) & sorteddata.zpos <= z(i+1)); 
+    for cnt=1:length(z)-1
+       temp = find(input.zpos > z(cnt) & input.zpos <= z(cnt+1)); 
         if temp > thresh3d
-            index{3,i} = temp;
+            index{3,cnt} = temp;
         end
     end
  
     numgp=0;   
     gpindex3d=[];
-    for i = 1:size(z,2)-1
-        i
-        for j= 1:size(y,2)-1
-            temp= intersect(index{3,i},index{2,j});
-            for k=1:size(x,2)-1
-                gpcnt = intersect(temp,index{1,k});        
+    for cnt = 1:size(z,2)-1
+        cnt
+        for cnt2= 1:size(y,2)-1
+            temp= intersect(index{3,cnt},index{2,cnt2});
+            for cnt3=1:size(x,2)-1
+                gpcnt = intersect(temp,index{1,cnt3});        
                 if numel(gpcnt) > thresh3d
                     gpindex3d =[gpindex3d;gpcnt];
                     numgp= numgp+1;
@@ -72,9 +68,9 @@ function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(sortedda
         end
     end
     
-   fnames = fieldnames(sorteddata);
-   for i=1:length(fnames)
-       sorteddata.(fnames{i})(gpindex3d)=[];
+   fnames = fieldnames(input);
+   for cnt=1:length(fnames)
+       input.(fnames{cnt})(gpindex3d)=[];
    end
 
 
@@ -83,10 +79,10 @@ function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(sortedda
    % 2d poisson statistics
    nopix = 0.8*(length(x)-1)*(length(y)-1);
    factor=1;
-   lambda = length(sorteddata.xpos)/nopix;
+   lambda = length(input.xpos)/nopix;
    if lambda>100
        factor=100;
-   lambda = length(sorteddata.xpos)/nopix/factor;
+   lambda = length(input.xpos)/nopix/factor;
    end
    count=1:round(3*lambda);
    if lambda < 100
@@ -94,7 +90,7 @@ function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(sortedda
    else
       mu = lambda;
       sigma = sqrt(lambda);
-      P=1/(sigma*sqrt(2*pi))* exp(-0.5.*((k-mu)/sigma).^2);
+      P=1/(sigma*sqrt(2*pi))* exp(-0.5.*((cnt3-mu)/sigma).^2);
    end
    
  
@@ -109,32 +105,32 @@ function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(sortedda
 
     
        
-       for i=1:size(x,2)-1        
-        temp = find(sorteddata.xpos > x(i) & sorteddata.xpos <= x(i+1)); 
+   for cnt=1:size(x,2)-1        
+        temp = find(input.xpos > x(cnt) & input.xpos <= x(cnt+1)); 
         if temp >0
-            ind2{1,i} = temp;
+            ind2{1,cnt} = temp;
         end
     end
         
-    for i=1:size(y,2)-1
-        temp = find(sorteddata.ypos > y(i) & sorteddata.ypos <= y(i+1)); 
+    for cnt=1:size(y,2)-1
+        temp = find(input.ypos > y(cnt) & input.ypos <= y(cnt+1)); 
         if temp >0
-            ind2{2,i} = temp;
+            ind2{2,cnt} = temp;
         end        
     end 
     
    
-   for j= 1:size(y,2)-1
-        for k=1:size(x,2)-1
-            gpcnt = intersect(ind2{2,j},ind2{1,k});
-            dist2d(j,k)= numel(gpcnt);
+   for cnt2= 1:size(y,2)-1
+        for cnt3=1:size(x,2)-1
+            gpcnt = intersect(ind2{2,cnt2},ind2{1,cnt3});
+            dist2d(cnt2,cnt3)= numel(gpcnt);
             
             if numel(gpcnt) > thresh2d
-                 dist2dfin(j,k) = 0;
+                 dist2dfin(cnt2,cnt3) = 0;
                  gpindex2d =[gpindex2d;gpcnt];
                  numgp=numgp+1;
             else
-               dist2dfin(j,k) = dist2d(j,k);
+               dist2dfin(cnt2,cnt3) = dist2d(cnt2,cnt3);
             end
             if numel(gpcnt) < lowerthreshold
                 lowerindex=[lowerindex;gpcnt];
@@ -147,21 +143,21 @@ function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(sortedda
      distarry = reshape(dist2d,1,[]);
      label=[];
 %    Determining labels for volume calculation
-     for j=1:(length(x)-1)*(length(y)-1)
-       if distarry(j)>thresh2d || distarry(j)<lowerthreshold
-           label=[label;j];
+     for cnt2=1:(length(x)-1)*(length(y)-1)
+       if distarry(cnt2)>thresh2d || distarry(cnt2)<lowerthreshold
+           label=[label;cnt2];
        end
      end
      
 
     figure
-   hist(reshape(dist2dfin,1,[]),length(count))
+    hist(reshape(dist2dfin,1,[]),length(count))
     hold on
     plot(count*factor,P*nopix,'r')
     title('2D poisson distribution & Histogram of data')
     xlabel('Number of particles per pixel')
     ylabel('Count')
-    saveas(gcf,'Histfile.png')   
+%     saveas(gcf,'Histfile.png')   
 
 
    
@@ -175,19 +171,19 @@ function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(sortedda
    xlabel('x (mm)')
    ylabel('y (mm)')
    colorbar
-   saveas(im,'2ddist_ini.png')  
+%    saveas(im,'2ddist_ini.png')  
    
 
     
     
-     sorteddata.xpos = sorteddata.xpos.*1e-6;
-    sorteddata.ypos = sorteddata.ypos.*1e-6;
-    sorteddata.zpos = sorteddata.zpos.*1e-6;
+    input.xpos = input.xpos.*1e-6;
+    input.ypos = input.ypos.*1e-6;
+    input.zpos = input.zpos.*1e-6;
     
-   fnames = fieldnames(sorteddata);
-   for i=1:length(fnames)
-       sorteddata.(fnames{i})(union(gpindex2d,lowerindex))=[];
-       particledata.(fnames{i}) = sorteddata.(fnames{i});
+   fnames = fieldnames(input);
+   for cnt=1:length(fnames)
+       input.(fnames{cnt})(union(gpindex2d,lowerindex))=[];
+       particledata.(fnames{cnt}) = input.(fnames{cnt});
    end
    
    figure
@@ -198,7 +194,7 @@ function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(sortedda
    xlabel('x (mm)')
    ylabel('y (mm)')
    colorbar
-   saveas(im,'2ddist_fin.png')
+%    saveas(im,'2ddist_fin.png')
 
    gpindex = union(gpindex3d,gpindex2d);
 end

@@ -8,7 +8,8 @@ title('Concentration:0-10 um')
 xlabel('Second of day')
 ylabel('concentration/litre')
 set(gca,'yscale','log')
-saveas(gcf,'Concentration:0-10um.png')
+plottools
+% saveas(gcf,'Concentration:0-10um.png')
 
 figure(2)
 plot(output.Second,(output.C10125+output.C10125)*2.5e-6,holodec.Second,(holodec.C10125+holodec.C12515)*2.5e-6,...
@@ -18,7 +19,8 @@ title('Concentration:10-16 um')
 xlabel('Second of day')
 ylabel('concentration/litre')
 set(gca,'yscale','log')
-saveas(gcf,'Concentration:10-16um.png')
+plottools
+% saveas(gcf,'Concentration:10-16um.png')
 
 figure(3)
 plot(output.Second,(output.C15175+output.C17520)*2.5e-6,holodec.Second,(holodec.C15175+holodec.C17520)*2.5e-6,...
@@ -28,7 +30,8 @@ title('Concentration:16-20 um')
 xlabel('Second of day')
 ylabel('concentration/litre')
 set(gca,'yscale','log')
-saveas(gcf,'Concentration:16-20um.png')
+plottools
+% saveas(gcf,'Concentration:16-20um.png')
 
 figure(4)
 plot(output.Second,(output.C20225+output.C22525)*2.5e-6,holodec.Second,(holodec.C20225+holodec.C22525)*2.5e-6,...
@@ -38,7 +41,8 @@ title('Concentration:20-25 um')
 xlabel('Second of day')
 ylabel('concentration/litre')
 set(gca,'yscale','log')
-saveas(gcf,'Concentration:20-25um.png')
+plottools
+% saveas(gcf,'Concentration:20-25um.png')
 
 figure(5)
 plot(output.Second,(output.C2530)*5e-6,holodec.Second,(holodec.C2530)*5e-6,...
@@ -48,7 +52,8 @@ title('Concentration:25-30 um')
 xlabel('Second of day')
 ylabel('concentration/litre')
 set(gca,'yscale','log')
-saveas(gcf,'Concentration:25-30um.png')
+plottools
+% saveas(gcf,'Concentration:25-30um.png')
 
 figure(6)
  plot(output.Second,(output.C3035)*5e-6,holodec.Second,(holodec.C3035)*5e-6,...
@@ -58,7 +63,8 @@ title('Concentration:30-35 um')
 xlabel('Second of day')
 ylabel('concentration/litre')
 set(gca,'yscale','log')
-saveas(gcf,'Concentration:30-35um.png')
+plottools
+% saveas(gcf,'Concentration:30-35um.png')
 
 figure(7)
 plot(output.Second,(output.C3540+output.C4045)*5e-6,holodec.Second,(holodec.C3540+holodec.C4045)*5e-6,...
@@ -69,7 +75,8 @@ title('Concentration:35-45 um')
 xlabel('Second of day')
 ylabel('concentration/litre')
 set(gca,'yscale','log')
-saveas(gcf,'Concentration:35-45um.png')
+plottools
+% saveas(gcf,'Concentration:35-45um.png')
 
 figure(8)
 plot(output.Second,(output.C4550*5e-6+output.C5060*10e-6),...
@@ -80,10 +87,12 @@ title('Concentration:45-60 um')
 xlabel('Second of day')
 ylabel('concentration/litre')
 set(gca,'yscale','log')
-saveas(gcf,'Concentration:45-60 um.png')
+plottools
+% saveas(gcf,'Concentration:45-60 um.png')
+
 
 figure(9)
-time='33000-38000';
+time='35000-38000';
 hold off
 [avgrad_twods,pdf_twods,concL,dr,variance] = pdfgenerator(twods,time,'1-100');
 sum(concL)
@@ -103,7 +112,7 @@ legend('fcdp','holodec','holodec\_susanne','twods')
 set(gca,'yscale','log')
 set(gca,'xscale','log')
 grid on
-saveas(gcf,'Fractionalconcentration.png')
+% saveas(gcf,'Fractionalconcentration.png')
 
 plottools
 
