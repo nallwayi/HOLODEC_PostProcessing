@@ -3,10 +3,10 @@
 % Path to holograms
 % cd([pwd,'\recon'])
 rules= {'pixden','ge',0.79;'dsqoverlz','le',2;'underthresh','ge',0.04;'asprat','le',1.5};
-pStats = getparticlemetrics(rules)    
+pStats = getparticlemetrics(rules,tree)    
 save(pStats,'pStats','-v7.3')
 
-% Combibing data to get a single data file
+% Combining data to get a single data file
 cd ..
 mkdir([pwd,'\data'])
 cd([pwd,'\data'])

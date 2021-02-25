@@ -7,13 +7,13 @@
 %       getparticlemetrics({'pixden','ge',0.79;'dsqoverlz','le',2;...
 %           'underthresh','ge',0.04;'asprat','le',1.5})
 
-function pStats = getparticlemetrics(rules)
+function pStats = getparticlemetrics(rules,tree)
     tic
 
 %     Loading the appropriate trees
 %     load 'particletree.mat' particletree
-    load 'particletree.mat' particletree
-    load 'noisetree.mat' noisetree
+%     load 'particletree.mat' particletree
+%     load 'noisetree.mat' noisetree
     
     pathtohistmat=pwd;
     histdetails = dir(fullfile(pathtohistmat,'*hist.mat'));
@@ -58,9 +58,14 @@ function pStats = getparticlemetrics(rules)
     
     %     Saving info about all processed holograms
     holoinfo   = nan(length(histdetails),2);
-    holoinfo(:,1) = holotimes;
-    holoinfo(:,2) = holosecond;
+    holoinfo(:,1) = holonum;
+    holoinfo(:,2) = timestamp;
+    holoinfo(:,3) = holotimes;
+    holoinfo(:,4) = holosecond;
     pStats.holoinfo = holoinfo;
+    pStats.rules   = rules;
+    pStats.noisetree = tree.noisetree;
+    pStats.particletree = tree.particletree;
     
     
 %     particledata=load(fullfile(pathtohistmat,histdetails(1).name));
@@ -116,9 +121,17 @@ function pStats = getparticlemetrics(rules)
             pStats.metrics.(metricnames{i})=[];
          end
          
-         
-         for cnt=1:length(histdetails)
-            particledata=load(fullfile(pathtohistmat,histdetails(cnt).name));
+     pStats  = getallhistmetrics(pStats,histdetails);
+     save('pStats_v0','pStats','-v7.3')
+     pStats  = processhistmetrics(pStats);
+      
+    toc 
+end
+
+function pStats  = getallhistmetrics(pStats,histdetails)
+        
+        for cnt=1:length(histdetails)
+            particledata=load(histdetails(cnt).name);
             metrics = particledata.pd.getmetrics;
             
 %           Adding pixden rule if it dosent exist
@@ -126,60 +139,71 @@ function pStats = getparticlemetrics(rules)
                 metrics.pixden = 4*metrics.area./(pi*metrics.minsiz.*metrics.majsiz);
             end
             
-%           Rules to remove artifacts from hist files
-            ind = 1:length(metrics.pixden);
-            for cnt2 = 1:size(rules,1)
-                fncn=str2func(rules{cnt2,2});
-                tmp = fncn(metrics.(rules{cnt2,1}),rules{cnt2,3}); 
-                ind = intersect(ind,find(tmp ==1));
-            end
-%             ind = find(metrics.pixden >= 0.79 & metrics.dsqoverlz <=2 &...
-%                 metrics.underthresh >= 0.04 & metrics.asprat<=1.5) ;
             
 %           Adding holonum, holotimes and timestamp
 
-            metrics.holotimes = ones((length(metrics.pixden)),1)*holotimes(cnt);
-            metrics.timestamp = ones((length(metrics.pixden)),1)*timestamp(cnt);
-            metrics.holonum   = ones((length(metrics.pixden)),1)*holonum(cnt);
-            metrics.holosecond   = ones((length(metrics.pixden)),1)*holosecond(cnt);
-
+            metrics.holonum   = ones((length(metrics.pixden)),1)*pStats.holoinfo(cnt,1);
+            metrics.timestamp = ones((length(metrics.pixden)),1)*pStats.holoinfo(cnt,2);
+            metrics.holotimes = ones((length(metrics.pixden)),1)*pStats.holoinfo(cnt,3);
+            metrics.holosecond= ones((length(metrics.pixden)),1)*pStats.holoinfo(cnt,4);
            
-            
-            if ~isempty(ind)
-                fnames = fieldnames(metrics);
-                for cnt2=1:length(fnames)
-                    metrics.(fnames{cnt2}) = metrics.(fnames{cnt2})(ind);
-                end
-                % Sorting the data in a hologram using classification trees
-                threshold = 10;
-                if length(ind)<=threshold
-                    tree = noisetree;
-                else
-                    tree = particletree;
-                end
-                metrics = sortusingclassificationtree(metrics,tree);
-                
-                
+                fnames = fieldnames(metrics);       
 %               Saving the predicted particles from each hologram
-                for cnt2=1:length(fnames)
-                    pStats.metrics.(fnames{cnt2}) ...
+
+                if exist('pStats','var')
+                    for cnt2=1:length(fnames)
+                        pStats.metrics.(fnames{cnt2}) ...
                         = cat(1,pStats.metrics.(fnames{cnt2})...
                         ,metrics.(fnames{cnt2}));
+                    end
+                else
+                    for cnt2=1:length(fnames)
+                        pStats.metrics.(fnames{cnt2})=metrics.(fnames{cnt2});
+                    end
                 end
-            end
+                
+            
             
          end  
-      
-    toc 
 end
 
-function metrics = sortusingclassificationtree(metrics,tree)
-    table = struct2table(metrics);
+function pStats  = processhistmetrics(pStats)
+
+% Rules to remove artifacts from hist files
+
+    fnames = fieldnames(pStats.metrics);       
+for cnt = 1:size(pStats.rules,1)
+    fncn=str2func(pStats.rules{cnt,2});
+    tmp = fncn(pStats.metrics.(pStats.rules{cnt,1}),pStats.rules{cnt,3});
+    for cnt2=1:length(fnames)
+        pStats.metrics.(fnames{cnt2})(~tmp)=[];
+    end
+end
+
+
+
+    for cnt=1:length(pStats.holoinfo)
+        ind = pStats.metrics.holotimes == pStats.holoinfo(cnt,3);
+        if ~isempty(ind)
+        	% Sorting the data in a hologram using classification trees
+        	threshold = 10;
+            if sum(ind)<=threshold
+            	tree = pStats.noisetree;
+            else
+                tree = pStats.particletree;
+            end
+                pStats.metrics = sortusingclassificationtree(pStats.metrics,tree);     
+        end
+    end
+
+end
+function this = sortusingclassificationtree(this,tree)
+    table = struct2table(this);
     ind = predict(tree,table)== 'Particle_round';
 
-    fnames = fieldnames(metrics);
+    fnames = fieldnames(this);
     for i=1:length(fnames)
-        metrics.(fnames{i}) = metrics.(fnames{i})(ind);
+        this.(fnames{i}) = this.(fnames{i})(ind);
     end
 
 end
