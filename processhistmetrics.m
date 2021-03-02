@@ -12,20 +12,39 @@ for cnt = 1:size(pStats.rules,1)
 end
 
 
-
+nind=[];
+pind=[];
     for cnt=1:length(pStats.holoinfo)
-        ind = pStats.metrics.holotimes == pStats.holoinfo(cnt,3);
+        ind = find(pStats.metrics.holotimes == pStats.holoinfo(cnt,3));
         if ~isempty(ind)
         	% Sorting the data in a hologram using classification trees
         	threshold = 10;
-            if sum(ind)<=threshold
-            	tree = pStats.noisetree;
+            if numel(ind)<=threshold
+                nind = [nind; ind];
             else
-                tree = pStats.particletree;
+                pind = [pind; ind];
             end
-                pStats.metrics = sortusingclassificationtree(pStats.metrics,tree);     
         end
     end
+
+    
+    for cnt=1:length(fnames)
+        nthis.(fnames{cnt}) = pStats.metrics.(fnames{cnt})(nind); 
+    end
+    nthis = sortusingclassificationtree(nthis,pStats.noisetree);
+    
+    for cnt=1:length(fnames)
+        pthis.(fnames{cnt}) = pStats.metrics.(fnames{cnt})(pind); 
+    end
+    pthis = sortusingclassificationtree(pthis,pStats.particletree);
+    
+    for cnt2=1:length(fnames)
+    pStats.metrics.(fnames{cnt2}) ...
+    = cat(1,nthis.(fnames{cnt2})...
+    ,pthis.(fnames{cnt2}));
+    end
+    unsortedTable = struct2table(pStats.metrics);
+    pStats.metrics = sortrows(unsortedTable, 'holonum');
 
 end
 function this = sortusingclassificationtree(this,tree)
