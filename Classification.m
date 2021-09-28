@@ -6,7 +6,7 @@ rules= {'pixden','ge',0.79;'dsqoverlz','le',2;'underthresh','ge',0.04;'asprat','
 pStats = getparticlemetrics(rules,tree)  
 save('pStats_v0','pStats','-v7.3')
 pStats  = processhistmetrics(pStats);
-save('pStats','pStats','-v7.3')
+save('pStats_v1','pStats','-v7.3')
 
 % Combining data to get a single data file
 cd ..

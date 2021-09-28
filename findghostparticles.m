@@ -27,7 +27,7 @@ function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(input)
     cnt3=1:round(4*lambda);
     P = lambda.^cnt3.*exp(-lambda)./factorial(cnt3);
     thresh3d = find(P*novox > 0.5, 1, 'last' )  
-    
+    tic
     for cnt=1:length(x)-1        
         temp = find(input.xpos > x(cnt) & input.xpos <= x(cnt+1)); 
         if temp >thresh3d
@@ -67,7 +67,7 @@ function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(input)
             end
         end
     end
-    
+    toc
    fnames = fieldnames(input);
    for cnt=1:length(fnames)
        input.(fnames{cnt})(gpindex3d)=[];
@@ -90,7 +90,7 @@ function [particledata,gpindex,numgp,dist2d,label] = findghostparticles(input)
    else
       mu = lambda;
       sigma = sqrt(lambda);
-      P=1/(sigma*sqrt(2*pi))* exp(-0.5.*((cnt3-mu)/sigma).^2);
+      P=1/(sigma*sqrt(2*pi))* exp(-0.5.*((count-mu)/sigma).^2);
    end
    
  

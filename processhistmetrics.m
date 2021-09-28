@@ -44,7 +44,14 @@ pind=[];
     ,pthis.(fnames{cnt2}));
     end
     unsortedTable = struct2table(pStats.metrics);
-    pStats.metrics = sortrows(unsortedTable, 'holonum');
+    pStats.metrics = [];
+    sortedTable = sortrows(unsortedTable, 'holonum');
+    fnames = fieldnames(sortedTable); 
+	for cnt=1:length(fnames)-3
+        pStats.metrics.(fnames{cnt}) ...
+            = sortedTable{:,cnt};
+	end    
+    
 
 end
 function this = sortusingclassificationtree(this,tree)

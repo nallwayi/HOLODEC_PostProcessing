@@ -121,14 +121,22 @@ function pStats = getparticlemetrics(rules,tree)
             pStats.metrics.(metricnames{i})=[];
          end
          
-     pStats  = getallhistmetrics(pStats,histdetails);
-      
+     metricsTable = getallhistmetrics(pStats,histdetails);
+     fnames = fieldnames(metricsTable); 
+	for cnt=1:length(fnames)-3
+        pStats.metrics.(fnames{cnt}) ...
+            = metricsTable{:,cnt};
+	end
+%      metrics =  table2struct(metricsTable);
+%      pStats.metrics  =  metricsTable;
     toc 
 end
 
-function pStats  = getallhistmetrics(pStats,histdetails)
-        
-        for cnt=1:length(histdetails)
+function unprcsdMetricsTable = getallhistmetrics(pStats,histdetails)
+     
+        unprcsdMetricsTable=[];
+        prcsdMetricsTable = [];
+        parfor cnt=1:length(histdetails)
             particledata=load(histdetails(cnt).name);
             metrics = particledata.pd.getmetrics;
             
@@ -145,23 +153,54 @@ function pStats  = getallhistmetrics(pStats,histdetails)
             metrics.holotimes = ones((length(metrics.pixden)),1)*pStats.holoinfo(cnt,3);
             metrics.holosecond= ones((length(metrics.pixden)),1)*pStats.holoinfo(cnt,4);
            
-                fnames = fieldnames(metrics);       
+%                 fnames = fieldnames(metrics);       
 %               Saving the predicted particles from each hologram
 
-                if exist('pStats','var')
-                    for cnt2=1:length(fnames)
-                        pStats.metrics.(fnames{cnt2}) ...
-                        = cat(1,pStats.metrics.(fnames{cnt2})...
-                        ,metrics.(fnames{cnt2}));
-                    end
-                else
-                    for cnt2=1:length(fnames)
-                        pStats.metrics.(fnames{cnt2})=metrics.(fnames{cnt2});
-                    end
-                end
-                
+%                 if exist('pStats','var')
+%                     for cnt2=1:length(fnames)
+%                         pStats.metrics.(fnames{cnt2}) ...
+%                         = cat(1,pStats.metrics.(fnames{cnt2})...
+%                         ,metrics.(fnames{cnt2}));
+%                     end
+%                 else
+%                     for cnt2=1:length(fnames)
+%                         pStats.metrics.(fnames{cnt2})=metrics.(fnames{cnt2});
+%                     end
+%                 end
+
+
             
+            tmp = struct2table(metrics);
+%             tmp = tmp{:,:};
+
+%             if cnt==1
+%                 metricsTable = tmp;
+%             else
+                unprcsdMetricsTable = [unprcsdMetricsTable;tmp];
+%             end
             
+%             fnames = fieldnames(pStats.metrics)
+%             tmp = ApplyRules2HistMetrics(tmp,pStats.rules,fnames);
+%             prcsdMetricsTable = [prcsdMetricsTable;tmp];
          end  
 end
+function this = ApplyRules2HistMetrics(this,rules,fnames)
 
+% Rules to remove artifacts from hist files
+
+%     fnames = fieldnames(pStats.metrics);       
+for cnt = 1:size(rules,1)
+    fncn=str2func(rules{cnt,2});
+    tmp = fncn(this.(rules{cnt,1}),rules{cnt,3});
+%     for cnt2=1:length(fnames)
+%         this.(fnames{cnt2})(~tmp)=[];
+%     end
+    this(~tmp,:)=[];
+% %     for cnt=1:length(tmp)
+% %         if ~tmp(cnt)
+% %             pStats.metrics(cnt,:)=[];
+% %         end
+% %     end
+end
+
+end

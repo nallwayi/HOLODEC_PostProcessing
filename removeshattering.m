@@ -2,7 +2,7 @@
 %  Function to remove shattering effects
 %  Initially it only involves chop-pff method but is to be later modified
 %  to include throw-away, SV surgery and Particle repair methods 
-function particledata = removeshattering(particledata,method)
+function metrics = removeshattering(metrics,method)
 
 if nargin<2
     method = 'chopoff';
@@ -12,11 +12,11 @@ end
 
 
 if isequal(method,'chopoff')
-    index = particledata.zpos < 0.020 | particledata.zpos > 0.150;
-    fnames = fieldnames(particledata);
+    index = metrics.zpos < 0.020 | metrics.zpos > 0.150;
+    fnames = fieldnames(metrics);
     
     for i=1:length(fnames)
-        particledata.(fnames{i})(index) = [];
+        metrics.(fnames{i})(index) = [];
     end
 end
 
