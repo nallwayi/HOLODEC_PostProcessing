@@ -34,7 +34,20 @@ User Inputs
      eg. load('decisionTrees') gives a tree.mat file containing tree.noisetree and tree.particletree.
      The sample decision tree (derived from IOP1 RF10) can be used as the default tree and can be found with this code.
   5. convert2ArchiveFrmt: yes or no input. Converts the pStats file to the archivable format if the input is yes.
-  
+
+Output
+pStats- Particle Stats
+  1. header - From the hist.mat file name
+  2. noholograms - Gives the number of holograms in each second. Used for the final concentration calculation
+  3. holoinfo - Contains the number,timestamp,microsecond info, second info of all holograms 
+  4. rules - Dynamic rules used in the code
+  5. noisetree- Decision tree used for the holograms in the regions outside the cloud
+  6. particletree- Decision tree used for holograms inside the cloud
+  7. metrics- Gives all the particle metrics (Includes holosecond- UTC second associated with a hologram and holonum- the chronological hologram number)
+  8. GP3dStats - Stats form the 3d ghost particle removal
+  9. GP2dStats - Stats form the 2d ghost particle removal
+  10. trimEdges - Stats form the optimisation of the sample volume
+  11. volume - The new optimized sample volume
   
   
       
