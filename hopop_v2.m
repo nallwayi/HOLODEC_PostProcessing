@@ -23,7 +23,8 @@
 %   1. Holosuite code added to path
 %   2. HOPOP code addes to path
 %   3. Statistics and Machine Learning Toolbox
-%   4. Preferably over 16 GB RAM
+%   4. Parallel Computing Toolbox
+%   5. Preferably over 16 GB RAM
 %% 
 
 % Inputs
