@@ -68,71 +68,30 @@ function pStats = getparticlemetrics(rules,tree)
     pStats.particletree = tree.particletree;
     
     
-%     particledata=load(fullfile(pathtohistmat,histdetails(1).name));
-%     pStats.metricnames = particledata.pd.metricnames;   
-%     
-%     if ~any(strcmp(pStats.metricnames,'pixden'))
-%         pStats.metricnames{end+1} = 'pixden';
-%     end
-%     if ~any(strcmp(pStats.metricnames,'holotimes'))
-%         pStats.metricnames{end+1} = 'holotimes';
-%     end
-%     if ~any(strcmp(pStats.metricnames,'timestamp'))
-%         pStats.metricnames{end+1} = 'timestamp';
-%     end
-%     if ~any(strcmp(pStats.metricnames,'holonum'))
-%         pStats.metricnames{end+1} = 'holonum';
-%     end
-%    
-% %    Determining index of predefined rules 
-%     
-%      if exist('rules','var')
-%         ruleVar = [];
-%         for cnt = 1:size(size(rules,1))
-%             tmp = find((strcmp(rules{cnt,1},pStats.metricnames)) == 1);
-%             ruleVar = [ruleVar;tmp]; 
-%         end
-%      end
-%             
-%     
-% %        Saving the metrics
-%     pStats.metricmat = [];
-%     for cnt=length(histdetails)-20:length(histdetails)
-%         particledata=load(fullfile(pathtohistmat,histdetails(cnt).name));
-%         pixden    = 4*particledata.pd.getmetric('area')./...
-%             (pi*particledata.pd.getmetric('minsiz').*...
-%             particledata.pd.getmetric('majsiz'));
-%         metricmat = [particledata.pd.metricmat];
-%         metricmat(:,end+1) = pixden;
-%         metricmat(:,end+1) = ones(length(pixden),1)*holotimes(cnt);
-%         metricmat(:,end+1) = ones(length(pixden),1)*timestamp(cnt);
-%         metricmat(:,end+1) = ones(length(pixden),1)*holonum(cnt);
-%         
-% %         Applying the dynamic rules
-% 
-%         pStats.metricmat = [pStats.metricmat;metricmat];
-%     end
-%     
-    
-         particledata=load(fullfile(pathtohistmat,histdetails(1).name));
-         metricnames = [particledata.pd.metricnames;'pixden';'holotimes';...
-             'timestamp';'holosecond';'holonum'];
-         for i=1:length(metricnames)
-            pStats.metrics.(metricnames{i})=[];
-         end
+	particledata=load(fullfile(pathtohistmat,histdetails(1).name));
+	metricnames = [particledata.pd.metricnames;'pixden';'holotimes';...
+        'timestamp';'holosecond';'holonum'];
+	for i=1:length(metricnames)
+        pStats.metrics.(metricnames{i})=[];
+    end
          
-     metricsTable = getallhistmetrics(pStats,histdetails);
-     fnames = fieldnames(metricsTable); 
+	metricsTable = getallhistmetrics(pStats,histdetails);
+    
+	fnames = fieldnames(metricsTable); 
 	for cnt=1:length(fnames)-3
         pStats.metrics.(fnames{cnt}) ...
             = metricsTable{:,cnt};
 	end
 %      metrics =  table2struct(metricsTable);
 %      pStats.metrics  =  metricsTable;
+
+% % Applying the preliminary rules
+%     pStats.metrics = ApplyRules2HistMetrics(pStats.metrics,rules,fnames);
+    
     toc 
 end
 
-function unprcsdMetricsTable = getallhistmetrics(pStats,histdetails)
+function prcsdMetricsTable = getallhistmetrics(pStats,histdetails)
      
         unprcsdMetricsTable=[];
         prcsdMetricsTable = [];
@@ -179,9 +138,9 @@ function unprcsdMetricsTable = getallhistmetrics(pStats,histdetails)
                 unprcsdMetricsTable = [unprcsdMetricsTable;tmp];
 %             end
             
-%             fnames = fieldnames(pStats.metrics)
-%             tmp = ApplyRules2HistMetrics(tmp,pStats.rules,fnames);
-%             prcsdMetricsTable = [prcsdMetricsTable;tmp];
+            fnames = fieldnames(pStats.metrics)
+            tmp = ApplyRules2HistMetrics(tmp,pStats.rules,fnames);
+            prcsdMetricsTable = [prcsdMetricsTable;tmp];
          end  
 end
 function this = ApplyRules2HistMetrics(this,rules,fnames)
