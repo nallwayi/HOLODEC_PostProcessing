@@ -83,9 +83,13 @@ GP3dStats.x_poisson3d =1:round(5*GP3dStats.lambda3d);
 GP3dStats.P_poisson3d = GP3dStats.lambda3d.^(GP3dStats.x_poisson3d).*...
     exp(-GP3dStats.lambda3d)./factorial(GP3dStats.x_poisson3d);
 
-GP3dStats.thresh3d = find(GP3dStats.P_poisson3d*GP3dStats.novox > P_3dthresh,...
-     1, 'last' ); %threshold for 3d stats  
-
+% Accounting for small flights
+if GP3dStats.lambda3d <=2
+    GP3dStats.thresh3d = 50;
+else
+    GP3dStats.thresh3d = find(GP3dStats.P_poisson3d*GP3dStats.novox > P_3dthresh,...
+        1, 'last' ); %threshold for 3d stats  
+end
 
 for cnt = 1:xsize
     prtclesIndxPerXbin{cnt} = ...
