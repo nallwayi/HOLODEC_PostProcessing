@@ -85,7 +85,7 @@ GP3dStats.P_poisson3d = GP3dStats.lambda3d.^(GP3dStats.x_poisson3d).*...
 
 % Accounting for small flights
 if GP3dStats.lambda3d <=2
-    GP3dStats.thresh3d = 50;
+    GP3dStats.thresh3d = 20;
 else
     GP3dStats.thresh3d = find(GP3dStats.P_poisson3d*GP3dStats.novox > P_3dthresh,...
         1, 'last' ); %threshold for 3d stats  
