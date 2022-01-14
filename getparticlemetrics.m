@@ -96,6 +96,7 @@ function prcsdMetricsTable = getallhistmetrics(pStats,histdetails)
         unprcsdMetricsTable=[];
         prcsdMetricsTable = [];
         parfor cnt=1:length(histdetails)
+            try
             particledata=load(histdetails(cnt).name);
             metrics = particledata.pd.getmetrics;
             
@@ -141,7 +142,11 @@ function prcsdMetricsTable = getallhistmetrics(pStats,histdetails)
             fnames = fieldnames(pStats.metrics)
             tmp = ApplyRules2HistMetrics(tmp,pStats.rules,fnames);
             prcsdMetricsTable = [prcsdMetricsTable;tmp];
-         end  
+             
+            catch
+                warning([histdetails(cnt).name ' could not be read'])
+            end
+        end
 end
 function this = ApplyRules2HistMetrics(this,rules,fnames)
 
