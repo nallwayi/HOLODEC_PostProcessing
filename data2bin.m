@@ -36,8 +36,8 @@ for cnt=1:numel(bin)-1
 end
 
 
-concMtrx = ones(numel(bin)-1,numel(second))*(-99999);
-concL    = ones(1,numel(second))*(-99999);
+concMtrx = ones(numel(bin)-1,numel(second))*(-9999);
+concL    = ones(1,numel(second))*(-9999);
 for cnt = 1:numel(second)
     ind = secondArr == second(cnt);
     if sum(ind) > 0
