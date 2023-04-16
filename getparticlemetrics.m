@@ -16,7 +16,11 @@ function pStats = getparticlemetrics(rules,tree)
 %     load 'noisetree.mat' noisetree
     
     pathtohistmat=pwd;
-    histdetails = dir(fullfile(pathtohistmat,'*hist.mat'));
+    
+    histdetails = dir(fullfile(pathtohistmat,'*/*hist.mat'));
+    if size(histdetails,1) ==0
+        histdetails = dir(fullfile(pathtohistmat,'*hist.mat'));
+    end
 
 
 
@@ -64,11 +68,13 @@ function pStats = getparticlemetrics(rules,tree)
     holoinfo(:,4) = holosecond;
     pStats.holoinfo = holoinfo;
     pStats.rules   = rules;
-    pStats.noisetree = tree.noisetree;
-    pStats.particletree = tree.particletree;
+    if exist('tree','var')
+        pStats.noisetree = tree.noisetree;
+        pStats.particletree = tree.particletree;
+    end
     
     
-	particledata=load(fullfile(pathtohistmat,histdetails(1).name));
+	particledata=load(fullfile(histdetails(1).folder,histdetails(1).name));
 	metricnames = [particledata.pd.metricnames;'pixden';'holotimes';...
         'timestamp';'holosecond';'holonum'];
 	for i=1:length(metricnames)
@@ -97,8 +103,10 @@ function prcsdMetricsTable = getallhistmetrics(pStats,histdetails)
         prcsdMetricsTable = [];
         parfor cnt=1:length(histdetails)
             try
-            particledata=load(histdetails(cnt).name);
+            particledata=load(fullfile(histdetails(cnt).folder,histdetails(cnt).name));
             metrics = particledata.pd.getmetrics;
+            metrics.prtclIm = particledata.pd.getprtclIm;
+            metrics.prtclID = particledata.pd.prtclID;
             
 %           Adding pixden rule if it dosent exist
             if ~isfield(metrics,'pixden')

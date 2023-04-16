@@ -35,7 +35,8 @@ dynamicRules = {'pixden','ge',0.80;'dsqoverlz','le',2;'underthresh',...
     'ge',0.04;'asprat','le',1.5};
 pathtodecisionTrees = '/hulk/data/Nithin/HOPOP_Test/';
 convert2ArchiveFrmt = 'yes'; % yes or no input
-
+predictionParams.method = 'cnn';
+predictionParams.model = '/home/nallwayi/SoftwareInstallations/holosuite/predict_pipeline/modelsNN/AE2_cnn_liquid_ft';
 
 %% Execution of the Code
 disp('-------------------------------')
@@ -44,14 +45,13 @@ disp('-------------------------------')
 disp('Post processing started...')
 
 
-load([pathtodecisionTrees 'decisionTrees.mat'])
 cd (pathtomatfiles)
 
 
 % Prelimiary rules to remove the sure noise 
 rules= {'pixden','ge',0.60;'dsqoverlz','le',10;'underthresh','ge',0.04;'asprat','le',3};
 disp('Reading the mat files')
-pStats = getparticlemetrics(rules,tree); 
+pStats = getparticlemetrics(rules); 
 
 cd (pathtosaveresults)
 mkdir([pStats.header '_HOPOP_V2_results'])
@@ -62,8 +62,15 @@ save('pStats_p0','pStats','-v7.3')
 
 % Rules from the optimization. This field can be left blanc
 rules= dynamicRules;
-disp('Removing noise using dynamic rules and decision trees')
-pStats  = processhistmetrics(pStats,rules);
+disp('Removing noise using dynamic rules and decision trees/CNN')
+if strcmp(predictionParams.method,'cnn')
+    predictionParams.pred_path = [fullfile(pathtosaveresults,pStats.header)...
+        '_HOPOP_V2_results/CNNFiles'];
+else
+    load([pathtodecisionTrees 'decisionTrees.mat'])
+    predictionMethodParams.tree = tree;
+end
+pStats  = processhistmetrics(pStats,rules,predictionParams);
 disp('Saving the level 1 processed pStats file')
 save('pStats_p1','pStats','-v7.3')
 

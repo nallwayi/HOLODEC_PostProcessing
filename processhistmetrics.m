@@ -1,8 +1,9 @@
-function pStats  = processhistmetrics(pStats,rules)
+function pStats  = processhistmetrics(pStats,rules,predictionParams)
 
 if exist('rules','var')
     pStats.rules = rules;
 end
+
 
 % Rules to remove artifacts from hist files
     fnames = fieldnames(pStats.metrics);       
@@ -21,6 +22,39 @@ for cnt = 1:size(pStats.rules,1)
 end
 
 
+pStats.predictionParams.method = predictionParams.method;
+if strcmp(predictionParams.method,'cnn') 
+    pStats.predictionParams.model = predictionParams.model;
+    pStats.predictionParams.pred_path = predictionParams.pred_path;
+    pStats = predictionUsingCNN(pStats);
+    
+else   
+    pStats.predictionParams.noisetree = predictionParams.tree.noisetree;
+    pStats.predictionParams.particletree = predictionParams.tree.particletree; 
+    pStats = predictionUsingDecisionTree(pStats);
+
+end
+
+
+end
+
+function pStats = predictionUsingCNN(pStats)
+
+temp1 = classificationData('prtclIm',pStats.metrics.prtclIm);
+temp1.predict_NN(pStats.predictionParams.model,...
+    pStats.predictionParams.pred_path)
+classsification_cnn= readtable(fullfile(pStats.predictionParams.pred_path,...
+    'dcnn_pred_pipeline.csv'));
+ind = (classsification_cnn{:,2} == 0);
+fnames = fieldnames(pStats.metrics);
+for cnt=1:length(fnames)
+    pStats.metrics.(fnames{cnt})(ind)=[];
+end
+
+end
+
+function pStats = predictionUsingDecisionTree(pStats)
+
 nind=[];
 pind=[];
     for cnt=1:length(pStats.holoinfo)
@@ -36,23 +70,44 @@ pind=[];
         end
     end
 
+    fnames = fieldnames(pStats.metrics);
     
-    for cnt=1:length(fnames)
-        nthis.(fnames{cnt}) = pStats.metrics.(fnames{cnt})(nind); 
+    if ~isempty(nind)
+        for cnt=1:length(fnames)
+            nthis.(fnames{cnt}) = pStats.metrics.(fnames{cnt})(nind);
+        end
+        nthis = sortusingclassificationtree...
+            (nthis,pStats.predictionParams.noisetree);
     end
-    nthis = sortusingclassificationtree(nthis,pStats.noisetree);
-
-    for cnt=1:length(fnames)
-        pthis.(fnames{cnt}) = pStats.metrics.(fnames{cnt})(pind); 
+    
+    if ~isempty(pind)
+        for cnt=1:length(fnames)
+            pthis.(fnames{cnt}) = pStats.metrics.(fnames{cnt})(pind);            
+        end
+        pthis = sortusingclassificationtree...
+            (pthis,pStats.predictionParams.particletree);
     end
-    pthis = sortusingclassificationtree(pthis,pStats.particletree);
-
-    for cnt2=1:length(fnames)
-    pStats.metrics.(fnames{cnt2}) ...
-    = cat(1,nthis.(fnames{cnt2})...
-    ,pthis.(fnames{cnt2}));
+    
+    if exist('nthis','var') && exist('pthis','var')
+        for cnt2=1:length(fnames)
+            pStats.metrics.(fnames{cnt2}) ...
+                = cat(1,nthis.(fnames{cnt2})...
+                ,pthis.(fnames{cnt2}));
+        end
+    elseif exist('pthis','var')
+        for cnt2=1:length(fnames)
+            pStats.metrics.(fnames{cnt2}) ...
+                = pthis.(fnames{cnt2});
+        end
+    else
+        for cnt2=1:length(fnames)
+            pStats.metrics.(fnames{cnt2}) ...
+                = nthis.(fnames{cnt2});
+        end
+        
     end
     unsortedTable = struct2table(pStats.metrics);
+    
     pStats.metrics=[];
     sortedT = sortrows(unsortedTable, 'holonum');
     for cnt2=1:length(fnames)
@@ -70,6 +125,8 @@ pind=[];
 
 end
 function this = sortusingclassificationtree(this,tree)
+
+
     table = struct2table(this);
 %     table=this;
     ind = predict(tree,table)== 'Particle_round';
