@@ -61,17 +61,8 @@ function pStats = getparticlemetrics(rules,tree)
     pStats.noholograms = noholograms;
     
     %     Saving info about all processed holograms
-    holoinfo   = nan(length(histdetails),2);
-    holoinfo(:,1) = holonum;
-    holoinfo(:,2) = timestamp;
-    holoinfo(:,3) = holotimes;
-    holoinfo(:,4) = holosecond;
-    pStats.holoinfo = holoinfo;
+    pStats.holoinfo = table(holonum,timestamp,holotimes,holosecond);
     pStats.rules   = rules;
-    if exist('tree','var')
-        pStats.noisetree = tree.noisetree;
-        pStats.particletree = tree.particletree;
-    end
     
     
 	particledata=load(fullfile(histdetails(1).folder,histdetails(1).name));
