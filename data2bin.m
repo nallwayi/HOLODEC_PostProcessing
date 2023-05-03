@@ -15,7 +15,7 @@ diamArr(diamArr <10e-6) = [];
 
 
 diamArr   = diamArr * 1e6; % diameter in um 
-second = pStats.holoinfo(1,4):pStats.holoinfo(end,4);
+second = pStats.holoinfo.holosecond(1):pStats.holoinfo.holosecond(end);
 
 bin = [0  10 12.5 15 17.5 20 22.5 25 30 35 40 45 50 60 70 80 ...
     90 100 150 200 250 300 350 400 450 500 2000];

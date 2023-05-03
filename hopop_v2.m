@@ -29,48 +29,69 @@
 
 % Inputs
 
-pathtomatfiles = '/hulk/data/Susanne/IOP2/RF07/recon';
-pathtosaveresults = '/hulk/data/Nithin/IOP2/';
-dynamicRules = {'pixden','ge',0.80;'dsqoverlz','le',2;'underthresh',...
+dest = 'ftp.archive.arm.gov';
+pathtomatfiles = '/allwayinn1/holodec_data/IOP2_Flight3/recon';
+
+% pathtomatfiles = '/hulk/data/Susanne/IOP2/RF07/recon';
+pathtosaveresults = '/temp_data/Nithin/research/ACEENA_IOP2';
+rules = {'pixden','ge',0.80;'dsqoverlz','le',2;'underthresh',...
     'ge',0.04;'asprat','le',1.5};
 pathtodecisionTrees = '/hulk/data/Nithin/HOPOP_Test/';
 convert2ArchiveFrmt = 'yes'; % yes or no input
 predictionParams.method = 'cnn';
 predictionParams.model = '/home/nallwayi/SoftwareInstallations/holosuite/predict_pipeline/modelsNN/AE2_cnn_liquid_ft';
+CPUlimit = 16; %GB
+
+
 
 %% Execution of the Code
+
+cd (pathtosaveresults)
+
+diary logFile
+
 disp('-------------------------------')
 disp('Holodec Post Processing Code ')
 disp('-------------------------------')
 disp('Post processing started...')
 
 
-cd (pathtomatfiles)
 
 
-% Prelimiary rules to remove the sure noise 
-rules= {'pixden','ge',0.60;'dsqoverlz','le',10;'underthresh','ge',0.04;'asprat','le',3};
-disp('Reading the mat files')
-pStats = getparticlemetrics(rules); 
-
-cd (pathtosaveresults)
-mkdir([pStats.header '_HOPOP_V2_results'])
-cd ([pStats.header '_HOPOP_V2_results'])
-disp('Saving the level 0 processed pStats file')
-save('pStats_p0','pStats','-v7.3')
 
 
-% Rules from the optimization. This field can be left blanc
-rules= dynamicRules;
-disp('Removing noise using dynamic rules and decision trees/CNN')
-if strcmp(predictionParams.method,'cnn')
-    predictionParams.pred_path = [fullfile(pathtosaveresults,pStats.header)...
-        '_HOPOP_V2_results/CNNFiles'];
-else
-    load([pathtodecisionTrees 'decisionTrees.mat'])
-    predictionMethodParams.tree = tree;
-end
-pStats  = processhistmetrics(pStats,rules,predictionParams);
+% % Prelimiary rules to remove the sure noise 
+% rules= {'pixden','ge',0.60;'dsqoverlz','le',10;'underthresh','ge',0.04;'asprat','le',3};
+% disp('Reading the mat files')
+% pStats = getparticlemetrics(rules); 
+% 
+% cd (pathtosaveresults)
+% mkdir([pStats.header '_HOPOP_V2_results'])
+% cd ([pStats.header '_HOPOP_V2_results'])
+% disp('Saving the level 0 processed pStats file')
+% save('pStats_p0','pStats','-v7.3')
+
+
+% % Rules from the optimization. This field can be left blanc
+% rules= dynamicRules;
+% disp('Removing noise using dynamic rules and decision trees/CNN')
+% if strcmp(predictionParams.method,'cnn')
+%     predictionParams.pred_path = [fullfile(pathtosaveresults,pStats.header)...
+%         '_HOPOP_V2_results/CNNFiles'];
+% else
+%     load([pathtodecisionTrees 'decisionTrees.mat'])
+%     predictionMethodParams.tree = tree;
+% end
+% pStats  = processhistmetrics(pStats,rules,predictionParams);
+% disp('Saving the level 1 processed pStats file')
+% save('pStats_p1','pStats','-v7.3')
+
+
+
+
+pStats = processHistfiles(dest,pathtomatfiles,rules,predictionParams,CPUlimit);
+
+
 disp('Saving the level 1 processed pStats file')
 save('pStats_p1','pStats','-v7.3')
 
@@ -100,7 +121,7 @@ end
 disp('')
 disp('Post processing completed.')
 disp('-------------------------------')
-
-
+diary off
+movefile('../logFile','logFile')
 
 
